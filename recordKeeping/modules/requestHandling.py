@@ -1,8 +1,8 @@
 ####                Imports
-from pip._vendor import requests
+import requests
 import json
 
-def txns(address, nextToken): #Address to check. Token is used buy API provider to request additional transactions
+def reqTxns(address, nextToken): #Address to check. Token is used buy API provider to request additional transactions
     if nextToken == 'first': #For initial check and regular updating
         print('\nSending API request - Transactions')
         response = requests.get('https://algoindexer.algoexplorerapi.io/v2/accounts/'
@@ -17,4 +17,19 @@ def txns(address, nextToken): #Address to check. Token is used buy API provider 
         token = txnJson['next-token']
         print('Token for more transations received')
     else: token = 'finished'
-    return [txnJson['transactions'], token]
+    #return [txnJson['transactions'], token]
+    return {'txns':txnJson['transactions'],
+            'token':token}
+
+#   
+def addNewTxns(reqTxnsOutput, txnDB):
+    #txnDB = db['rawTransactions']
+    addedCount = 0
+    for txn in reqTxnsOutput['txns']:
+        if txn['id'] not in txnDB:
+            txnDB[txn['id']] = txn
+            addedCount += 1
+        else:
+            return(txnDB)
+    print('Current transaction total ' + str(len(txnDB)) + '. Added: ' + str(addedCount))
+    return(txnDB)
