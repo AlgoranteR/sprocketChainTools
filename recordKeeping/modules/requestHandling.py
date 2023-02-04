@@ -22,14 +22,13 @@ def reqTxns(address, nextToken): #Address to check. Token is used buy API provid
             'token':token}
 
 #   
-def addNewTxns(reqTxnsOutput, txnDB):
-    #txnDB = db['rawTransactions']
+def addNewTxns(reqTxnsOutput, rawTxnDB):
     addedCount = 0
     for txn in reqTxnsOutput['txns']:
-        if txn['id'] not in txnDB:
-            txnDB[txn['id']] = txn
+        if txn['id'] not in rawTxnDB:
+            rawTxnDB[txn['id']] = txn
             addedCount += 1
         else:
-            return(txnDB)
-    print('Current transaction total ' + str(len(txnDB)) + '. Added: ' + str(addedCount))
-    return(txnDB)
+            return(rawTxnDB)
+    print('Current transaction total ' + str(len(rawTxnDB)) + '. Added: ' + str(addedCount))
+    return(rawTxnDB)
