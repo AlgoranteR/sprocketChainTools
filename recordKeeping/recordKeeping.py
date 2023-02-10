@@ -55,6 +55,13 @@ acfgC = 0
 axferC = 0
 afrzC = 0
 applC = 0
+feesC = 0
+sentC = 0
+receivedC = 0
+txnWithInnerC = 0
+innerTxnC = 0
+innerWithInnerC = 0
+inInnerTxnC = 0
 
 groupedTxns = 0
 for txn in db['rawTransactions']:
@@ -84,28 +91,56 @@ for txn in db['rawTransactions']:
         #New group, add it and this txn.
             db['groups'][groupID] = [txn]
 
-    ##                  txn Types
 
-        if db['rawTransactions'][txn]['tx-type'] == 'pay':
-            txnDetails = db['rawTransactions'][txn]['payment-transaction']
-            payC += 1
-        elif db['rawTransactions'][txn]['tx-type'] == 'keyreg':
-            txnDetails = db['rawTransactions'][txn]['keyreg-transaction']
-            keyregC += 1
-        elif db['rawTransactions'][txn]['tx-type'] == 'acfg':
-            txnDetails = db['rawTransactions'][txn]['asset-config-transaction']
-            acfgC += 1
-        elif db['rawTransactions'][txn]['tx-type'] == 'axfer':
-            txnDetails = db['rawTransactions'][txn]['asset-transfer-transaction']
-            axferC += 1
-        elif db['rawTransactions'][txn]['tx-type'] == 'afrz':
-            txnDetails = db['rawTransactions'][txn]['asset-freeze-transaction']
-            afrzC += 1
-        elif db['rawTransactions'][txn]['tx-type'] == 'appl':
-            txnDetails = db['rawTransactions'][txn]['application-transaction']
-            applC += 1
-        else:
-            print('!!!txnDetails!!!')
+    ##                  txn type Details
+    receiver = ''
+    if db['rawTransactions'][txn]['tx-type'] == 'pay':
+        txnDetails = db['rawTransactions'][txn]['payment-transaction']
+        receiver = txnDetails['receiver']
+        payC += 1
+    elif db['rawTransactions'][txn]['tx-type'] == 'appl':
+        txnDetails = db['rawTransactions'][txn]['application-transaction']
+        applC += 1
+    elif db['rawTransactions'][txn]['tx-type'] == 'axfer':
+        txnDetails = db['rawTransactions'][txn]['asset-transfer-transaction']
+        receiver = txnDetails['receiver']
+        axferC += 1
+    elif db['rawTransactions'][txn]['tx-type'] == 'keyreg':
+        txnDetails = db['rawTransactions'][txn]['keyreg-transaction']
+        keyregC += 1
+    elif db['rawTransactions'][txn]['tx-type'] == 'acfg':
+        txnDetails = db['rawTransactions'][txn]['asset-config-transaction']
+        acfgC += 1
+    elif db['rawTransactions'][txn]['tx-type'] == 'afrz':
+        txnDetails = db['rawTransactions'][txn]['asset-freeze-transaction']
+        afrzC += 1
+
+    sender = db['rawTransactions'][txn]['sender']
+    if sender == db['wallet']:
+        sentC += 1
+        feesC += db['rawTransactions'][txn]['fee']
+    elif receiver == db['wallet']:
+        receivedC += 1
+    
+    ##                  inner transactions
+    if 'inner-txns' in db['rawTransactions'][txn]:
+        #print(txn)
+        txnWithInnerC += 1
+        for innerTxn in db['rawTransactions'][txn]['inner-txns']:
+            innerTxnC += 1
+            #print(innerTxn['tx-type'])
+            #print('-')
+            if 'inner-txns' in innerTxn:
+                innerWithInnerC += 1
+                for inInnerTxn in innerTxn['inner-txns']:
+                    inInnerTxnC += 1
+                    #print('inInner')
+                    #print(inInnerTxn['tx-type'])
+        #print(db['rawTransactions'][txn]['inner-txns'])
+        #print('\n')
+    
+
+    ##                  participation rewards
 
 
 ####                Print interesting data
@@ -124,7 +159,13 @@ print('Asset Configs: ' + str(acfgC))
 print('Asset Transfers: ' + str(axferC))
 print('Asset Freezes: ' + str(afrzC))
 print('Application Transactions: ' + str(applC))
-
+print('\nTransactions sent: ' + str(sentC))
+print('Transactions received: ' + str(receivedC))
+print('Transaction fees paid: ' + str(feesC / 1000000) + ' ALGO')
+print('Number of transactions containing inner transactions: ' + str(txnWithInnerC))
+print('Number of inner transactions: ' + str(innerTxnC))
+print('Number of inner transactions that contain inner transactions: ' + str(innerWithInnerC))
+print('Number of inner transactions inside inner transactions: ' + str(inInnerTxnC))
 ####                Store data
 dbJson = json.dumps(db)
 outFile = open('db.json', 'w')
